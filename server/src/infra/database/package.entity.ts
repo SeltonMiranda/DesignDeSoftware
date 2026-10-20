@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn } from "typeorm";
 
 @Entity()
-export class PostgresPackage {
+export class PackageSchema {
     @PrimaryColumn()
     id!: string;
 

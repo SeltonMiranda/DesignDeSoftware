@@ -1,13 +1,13 @@
 import { Package } from "../../domain/package.js";
-import { PostgresPackage } from "./PostgresPackage.js";
+import { PackageSchema } from "./package.entity.js";
 
 export class PackageMapper {
-    static toDomain(row: PostgresPackage): Package {
+    static toDomain(row: PackageSchema): Package {
         return new Package(row.id, row.owner, row.createdAt);
     }
 
-    static toPersistence(pack: Package): PostgresPackage {
-        const row = new PostgresPackage();
+    static toPersistence(pack: Package): PackageSchema {
+        const row = new PackageSchema();
         row.id = pack.id;
         row.owner = pack.owner;
         row.createdAt = pack.createdAt;

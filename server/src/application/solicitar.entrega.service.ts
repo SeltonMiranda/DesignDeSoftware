@@ -1,10 +1,10 @@
 import { Package } from "../domain/package.js";
-import { SolicitarEntregaUseCase } from "../ports/in/SolicitarEntregaUseCase.js";
-import { PackageRepository } from "../ports/out/PackageRepository.js";
+import { SolicitarEntregaUseCase } from "../ports/in/solicitar.entrega.use-case.js";
+import { IPackageRepository } from "../ports/out/package.repository.js";
 
 export class SolicitarEntregaService implements SolicitarEntregaUseCase {
     constructor(
-        private readonly encomendaRepository: PackageRepository
+        private readonly encomendaRepository: IPackageRepository
     ) {}
 
     execute(): void {
