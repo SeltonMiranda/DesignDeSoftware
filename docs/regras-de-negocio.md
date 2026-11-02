@@ -1,11 +1,5 @@
 # Regras de negócio
 
-Regras do **sistema de gestão de entregas internas do campus**. Cada regra indica o requisito a que se refere (ver [`requisitos.md`](requisitos.md)). Valores marcados com **[parametrizável]** são configuráveis e não ficam fixos no código.
-
-**Usuário único.** O sistema não tem tipos de usuário: qualquer pessoa pode executar qualquer operação em qualquer encomenda. Não há entidade de usuário no domínio, nem verificação de permissão, e nenhuma operação guarda quem a executou. Nomes de pessoas (responsável pela entrega, quem recebeu) são dados informados como texto na operação.
-
-**Dois históricos.** O sistema mantém dois históricos com finalidades diferentes: o **histórico de movimentação** (seção 4), que acompanha cada encomenda evento a evento, e o **histórico de auditoria** (seção 5), que guarda um único registro de fechamento por encomenda, só quando ela é entregue ou cancelada.
-
 ## 1. Solicitação e dados da encomenda
 
 | ID | Regra | Requisito |
@@ -15,16 +9,15 @@ Regras do **sistema de gestão de entregas internas do campus**. Cada regra indi
 | RN03 | O conteúdo só pode ser "documento" ou "volume". | RF01 |
 | RN04 | O local de origem deve ser diferente do local de destino. | RF01 |
 | RN05 | O código de rastreamento é gerado pelo sistema, nunca informado pelo usuário. | RF01 |
-| RN06 | O código de rastreamento é único e não muda depois de gerado. | RF01 |
-| RN07 | O código tem o formato sigla do campus de origem + 8 caracteres alfanuméricos aleatórios (ex.: `POL-7K3QX9AB`). Não é sequencial, para evitar colisão em cadastros simultâneos. | RF01 |
+| RN06 | O código tem o formato sigla do campus de origem + 8 caracteres alfanuméricos aleatórios (ex.: `POL-7K3QX9AB`). Não é sequencial, para evitar colisão em cadastros simultâneos. | RF01 |
 
 ## 2. Prioridade e fila de coleta
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN08 | Os valores possíveis de prioridade são baixa, média, alta. A ordem de coleta é: alta > média > baixa. | RF01, RF06 |
-| RN09 | Na fila de coleta, encomendas de mesma prioridade são atendidas da mais antiga para a mais recente. | RF06 |
-| RN10 | A prioridade só pode ser alterada enquanto a encomenda estiver em "Aguardando coleta". | RF09 |
+| RN07 | Os valores possíveis de prioridade são baixa, média, alta. A ordem de coleta é: alta > média > baixa. | RF01, RF06 |
+| RN08 | Na fila de coleta, encomendas de mesma prioridade são atendidas da mais antiga para a mais recente. | RF06 |
+| RN09 | A prioridade só pode ser alterada enquanto a encomenda estiver em "Aguardando coleta". | RF09 |
 
 ## 3. Situação e transições
 
@@ -32,10 +25,10 @@ Situações possíveis: **Aguardando coleta** (inicial), **Em trânsito**, **Ent
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN11 | Só são permitidas as transições: Aguardando coleta → Em trânsito; Em trânsito → Entregue; Aguardando coleta → Cancelada. Qualquer outra transição é rejeitada e não altera a encomenda. | RF04, RF08 |
-| RN12 | "Entregue" e "Cancelada" são situações finais: nenhuma transição, edição ou ocorrência é aceita depois delas. | RF04 |
-| RN13 | Ao passar para "Em trânsito", é obrigatório informar o nome do responsável pela entrega. Ele fica guardado na encomenda. | RF04 |
-| RN14 | Ao passar para "Entregue", é obrigatório informar o nome de quem recebeu. Ele fica guardado na encomenda. | RF04 |
+| RN10 | Só são permitidas as transições: Aguardando coleta → Em trânsito, Em trânsito → Entregue, Aguardando coleta → Cancelada. Qualquer outra transição é rejeitada e não altera a encomenda. | RF04, RF08 |
+| RN11 | "Entregue" e "Cancelada" são situações finais: nenhuma transição, edição ou ocorrência é aceita depois delas. | RF04 |
+| RN12 | Ao passar para "Em trânsito", é obrigatório informar o nome do responsável pela entrega. Ele fica guardado na encomenda. | RF04 |
+| RN13 | Ao passar para "Entregue", é obrigatório informar o nome de quem recebeu. Ele fica guardado na encomenda. | RF04 |
 
 ## 4. Histórico de movimentação
 
@@ -43,13 +36,13 @@ O **histórico de movimentação** acompanha uma encomenda do cadastro até o fi
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN15 | Cada evento tem exatamente os campos da seção 4.1. | RF02, RF03 |
-| RN16 | A data e a hora do evento são geradas pelo servidor, nunca informadas pelo usuário. O armazenamento é em UTC e a exibição usa o fuso `America/Sao_Paulo`. | RF02, RF03 |
-| RN17 | Eventos nunca são editados nem apagados. Um erro deve ser corrigido por meio de um novo evento do tipo ocorrência, preservando o evento original. | RF03, RNF06 |
-| RN18 | Os eventos são exibidos do mais recente para o mais antigo, pela sequência (do maior número para o menor). | RF02, RF03 |
-| RN19 | Toda mudança de situação, inclusive o cadastro, gera exatamente um evento de movimentação, gravado na mesma transação da mudança. Não pode existir mudança de situação sem evento, nem evento de mudança de situação sem a correspondente mudança. | RF03, RF04, RNF03 |
-| RN20 | A sequência começa em 1 no cadastro e aumenta de 1 em 1 a cada novo evento da mesma encomenda, sem repetições nem lacunas. É gerada pelo sistema e define a ordem dos eventos. | RF03 |
-| RN21 | A descrição é preenchida conforme o tipo do evento (seção 4.2) e tem no máximo 255 caracteres. Textos digitados pelo usuário (motivo e ocorrência) acima desse limite são rejeitados. | RF03 |
+| RN14 | Cada evento tem exatamente os campos da seção 4.1. | RF02, RF03 |
+| RN15 | A data e a hora do evento são geradas pelo servidor, nunca informadas pelo usuário. O armazenamento é em UTC e a exibição usa o fuso `America/Sao_Paulo`. | RF02, RF03 |
+| RN16 | Eventos nunca são editados nem apagados. Um erro deve ser corrigido por meio de um novo evento do tipo ocorrência, preservando o evento original. | RF03, RNF06 |
+| RN17 | Os eventos são exibidos do mais recente para o mais antigo, pela sequência (do maior número para o menor). | RF02, RF03 |
+| RN18 | Toda mudança de situação, inclusive o cadastro, gera exatamente um evento de movimentação, gravado na mesma transação da mudança. Não pode existir mudança de situação sem evento, nem evento de mudança de situação sem a correspondente mudança. | RF03, RF04, RNF03 |
+| RN19 | A sequência começa em 1 no cadastro e aumenta de 1 em 1 a cada novo evento da mesma encomenda, sem repetições nem lacunas. É gerada pelo sistema e define a ordem dos eventos. | RF03 |
+| RN20 | A descrição é preenchida conforme o tipo do evento (seção 4.2) e tem no máximo 255 caracteres. Textos digitados pelo usuário (motivo e ocorrência) acima desse limite são rejeitados. | RF03 |
 
 ### 4.1. Campos do evento de movimentação
 
@@ -91,12 +84,12 @@ O **histórico de auditoria** guarda o resultado final de cada encomenda encerra
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN22 | O registro de auditoria é criado somente quando a encomenda passa para "Entregue" ou "Cancelada", e nunca antes. Cadastro, início do transporte, edição e ocorrência não criam registro de auditoria. | RF07 |
-| RN23 | Existe no máximo um registro de auditoria por encomenda, e exatamente um para cada encomenda finalizada. Ele é gravado na mesma transação da transição final e do evento de movimentação correspondente. | RF07, RNF03 |
-| RN24 | Cada registro tem exatamente os campos da seção 5.1. Os dados copiados da encomenda são os valores no momento da finalização, já incluindo eventuais edições. | RF07 |
-| RN25 | O registro de auditoria nunca é editado nem apagado. Como a encomenda finalizada não aceita mais alterações (RN12), o registro nunca fica diferente da encomenda. | RF07, RNF06 |
-| RN26 | Em registro de encomenda entregue, o responsável pela entrega e o nome de quem recebeu são obrigatórios e o motivo do cancelamento fica vazio. Em registro de encomenda cancelada, o motivo é obrigatório e o responsável pela entrega e o nome de quem recebeu ficam vazios (o cancelamento só é aceito antes da coleta). | RF07, RF08 |
-| RN27 | O histórico de auditoria é consultado em uma listagem paginada (RN37), da finalização mais recente para a mais antiga. | RF07 |
+| RN21 | O registro de auditoria é criado somente quando a encomenda passa para "Entregue" ou "Cancelada", e nunca antes. Cadastro, início do transporte, edição e ocorrência não criam registro de auditoria. | RF07 |
+| RN22 | Existe no máximo um registro de auditoria por encomenda, e exatamente um para cada encomenda finalizada. Ele é gravado na mesma transação da transição final e do evento de movimentação correspondente. | RF07, RNF03 |
+| RN23 | Cada registro tem exatamente os campos da seção 5.1. Os dados copiados da encomenda são os valores no momento da finalização, já incluindo eventuais edições. | RF07 |
+| RN24 | O registro de auditoria nunca é editado nem apagado. Como a encomenda finalizada não aceita mais alterações (RN12), o registro nunca fica diferente da encomenda. | RF07, RNF06 |
+| RN25 | Em registro de encomenda entregue, o responsável pela entrega e o nome de quem recebeu são obrigatórios e o motivo do cancelamento fica vazio. Em registro de encomenda cancelada, o motivo é obrigatório e o responsável pela entrega e o nome de quem recebeu ficam vazios (o cancelamento só é aceito antes da coleta). | RF07, RF08 |
+| RN26 | O histórico de auditoria é consultado em uma listagem paginada (RN37), da finalização mais recente para a mais antiga. | RF07 |
 
 ### 5.1. Campos do registro de auditoria
 
@@ -113,7 +106,7 @@ O **histórico de auditoria** guarda o resultado final de cada encomenda encerra
 | destinatário | texto | Sim | Cópia da encomenda na finalização. |
 | origem | campus, prédio e sala | Sim | Cópia da encomenda na finalização. |
 | destino | campus, prédio e sala | Sim | Cópia da encomenda na finalização. |
-| prioridade | baixa, média, alta ou urgente | Sim | Cópia da encomenda na finalização. |
+| prioridade | baixa, média ou alta | Sim | Cópia da encomenda na finalização. |
 
 ### 5.2. Exemplo de registros de auditoria
 
@@ -138,37 +131,23 @@ O **histórico de auditoria** guarda o resultado final de cada encomenda encerra
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN28 | O cancelamento só é aceito em "Aguardando coleta". | RF08 |
-| RN29 | O cancelamento exige um motivo (até 255 caracteres). O motivo é registrado no evento `CANCELAMENTO` e no registro de auditoria. | RF07, RF08 |
-| RN30 | A edição só é aceita em "Aguardando coleta". Os campos editáveis são: destinatário, local de destino, peso, conteúdo e prioridade. Código de rastreamento, remetente e local de origem não são editáveis. As regras de validação do cadastro (RN02 a RN04) continuam valendo após a edição. | RF09 |
-| RN31 | Cada edição aceita gera um evento `ALTERACAO`, listando os nomes dos campos alterados, sem alterar a situação da encomenda. Uma edição sem nenhuma mudança é rejeitada e não gera evento. | RF03, RF09 |
-| RN32 | Uma ocorrência exige texto (até 255 caracteres) e é aceita apenas em "Aguardando coleta" ou "Em trânsito". Ela gera um evento `OCORRENCIA` e não muda a situação da encomenda. | RF03, RF10 |
+| RN27 | O cancelamento só é aceito em "Aguardando coleta". | RF08 |
+| RN28 | O cancelamento exige um motivo (até 255 caracteres). O motivo é registrado no evento `CANCELAMENTO` e no registro de auditoria. | RF07, RF08 |
+| RN29 | A edição só é aceita em "Aguardando coleta". Os campos editáveis são: destinatário, local de destino, peso, conteúdo e prioridade. Código de rastreamento, remetente e local de origem não são editáveis. As regras de validação do cadastro (RN02 a RN04) continuam valendo após a edição. | RF09 |
+| RN30 | Cada edição aceita gera um evento `ALTERACAO`, listando os nomes dos campos alterados, sem alterar a situação da encomenda. Uma edição sem nenhuma mudança é rejeitada e não gera evento. | RF03, RF09 |
+| RN31 | Uma ocorrência exige texto (até 255 caracteres) e é aceita apenas em "Aguardando coleta" ou "Em trânsito". Ela gera um evento `OCORRENCIA` e não muda a situação da encomenda. | RF03, RF10 |
 
-## 7. Concorrência e consistência (aqui precisamos pensar um pouco se inserimos essa complexidade ou não)
-
-| ID | Regra | Requisito |
-| :-: | :- | :-: |
-| RN33 | Cada encomenda tem um número de versão. Uma atualização só é aplicada se a versão lida ainda for a atual. Se duas atualizações concorrentes chegarem, uma é aplicada e a outra recebe erro de conflito, devendo recarregar a encomenda. | RNF03 |
-| RN34 | Cada requisição de escrita carrega um identificador único. Se a mesma requisição for reenviada (por exemplo, após falha de rede), o sistema devolve o resultado anterior sem gravar um segundo evento de movimentação, sem criar um segundo registro de auditoria e sem duplicar o efeito da operação. | RNF03 |
-
-## 8. Consulta e listagem
+## 7. Consulta e listagem
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN35 | O intervalo de datas do filtro considera as data de início e fim. As datas de início e fim são inclusivas, e a data de início não pode ser posterior à data de fim. | RF05 |
-| RN36 | Os filtros são combináveis: todos os critérios informados precisam ser atendidos. Sem filtros, a listagem mostra todas as encomendas. | RF05 |
-| RN37 | As listagens (de encomendas e do histórico de auditoria) são paginadas, com 10 itens por página. A lista de encomendas vai da mais recente para a mais antiga. | RF05, RF07 |
+| RN32 | O intervalo de datas do filtro considera as data de início e fim. As datas de início e fim são inclusivas, e a data de início não pode ser posterior à data de fim. | RF05 |
+| RN33 | Os filtros são combináveis: todos os critérios informados precisam ser atendidos. Sem filtros, a listagem mostra todas as encomendas. | RF05 |
+| RN34 | As listagens (de encomendas e do histórico de auditoria) são paginadas, com 10 itens por página. A lista de encomendas vai da mais recente para a mais antiga. | RF05, RF07 |
 
-## 9. Campi e locais (talvez não esteja façamos)
-
-| ID | Regra | Requisito |
-| :-: | :- | :-: |
-| RN38 | O local de origem e o de destino devem existir no cadastro de campi, prédios e salas. | RF01, RF11 |
-| RN39 | Campi, prédios e salas entram no sistema por carga de dados/configuração, sem alterar código. Inicialmente existe apenas o campus Politécnico. | RF11, RNF05 |
-
-## 10. Notificações
+## 8. Notificações
 
 | ID | Regra | Requisito |
 | :-: | :- | :-: |
-| RN40 | Toda mudança de situação dispara uma notificação por e-mail ao endereço informado no cadastro. Se nenhum e-mail foi informado, não há notificação. | RF12 |
-| RN41 | A notificação é enviada depois da gravação. Se o envio falhar, a mudança de situação permanece. A falha de notificação nunca desfaz a atualização. | RF12, RNF01, RNF03 |
+| RN35 | Toda mudança de situação dispara uma notificação por e-mail ao endereço informado no cadastro. Se nenhum e-mail foi informado, não há notificação. | RF12 |
+| RN36 | A notificação é enviada depois da gravação. Se o envio falhar, a mudança de situação permanece. A falha de notificação nunca desfaz a atualização. | RF12, RNF01, RNF03 |
