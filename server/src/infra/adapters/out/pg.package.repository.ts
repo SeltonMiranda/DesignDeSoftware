@@ -1,9 +1,9 @@
 import { Repository } from "typeorm";
 
-import { Package } from "../../domain/package.js";
-import { IPackageRepository } from "../../ports/out/package.repository.js";
-import { PackageSchema } from "../../infra/database/package.entity.js";
-import { PackageMapper } from "../../infra/database/package.mapper.js";
+import { Package } from "#domain/package.js";
+import { IPackageRepository } from "#application/ports/out/package.repository.js";
+import { PackageSchema } from "#infra/database/package.entity.js";
+import { PackageMapper } from "#infra/database/package.mapper.js";
 
 export class PgPackageRepository implements IPackageRepository {
     constructor(private readonly repo: Repository<PackageSchema>) {}

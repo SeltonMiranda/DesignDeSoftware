@@ -1,4 +1,4 @@
-import { Package } from "../../domain/package.js"
+import { Package } from "#domain/package.js"
 
 export interface IPackageRepository {
     save(pack: Package): Promise<void>;

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { SolicitarEntregaUseCase } from "../../../ports/in/solicitar.entrega.use-case.js";
+import { SolicitarEntregaUseCase } from "#application/ports/in/solicitar.entrega.use-case.js";
 
 export class PackageController {
     constructor(

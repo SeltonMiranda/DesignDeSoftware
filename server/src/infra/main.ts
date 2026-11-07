@@ -1,8 +1,8 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import { AppDataSource } from './infra/data.source.js';
 
-import { routes } from './infra/routes.js';
+import { AppDataSource } from './data.source.js';
+import { routes } from './adapters/in/http/routes/routes.js';
 
 await AppDataSource.initialize();
 

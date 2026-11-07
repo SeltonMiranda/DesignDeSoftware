@@ -12,7 +12,12 @@
       "useDefineForClassFields": false,
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
-      "sourceMap": true
+      "sourceMap": true,
+      "paths": {
+        "#domain/*": ["./src/domain/*"],
+        "#application/*": ["./src/application/*"],
+        "#infra/*": ["./src/infra/*"],
+      }
     },
     "include": ["src/**/*"]
   }

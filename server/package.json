@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch --env-file=../.env src/main.ts",
+    "dev": "tsx watch --env-file=../.env src/infra/main.ts",
     "build": "tsc",
-    "start": "node --env-file-if-exists=../.env dist/main.js",
+    "start": "node --env-file-if-exists=../.env dist/infra/main.js",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
@@ -28,5 +28,10 @@
     "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
     "typescript": "~6.0"
+  },
+  "imports": {
+    "#domain/*": "./dist/domain/*",
+    "#application/*": "./dist/application/*",
+    "#infra/*": "./dist/infra/*"
   }
 }

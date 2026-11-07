@@ -1,5 +1,5 @@
-import { Package } from "../../domain/package.js";
-import { PackageSchema } from "./package.entity.js";
+import { Package } from "#domain/package.js";
+import { PackageSchema } from "#infra/database/package.entity.js";
 
 export class PackageMapper {
     static toDomain(row: PackageSchema): Package {
