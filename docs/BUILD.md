@@ -35,10 +35,10 @@ Servidor TypeScript (Node 24, Express 5, TypeORM, PostgreSQL).
 
 | Comando | O que faz |
 |---------|-----------|
-| `npm run dev` | Roda `src/main.ts` com `tsx watch` (recarrega ao salvar) |
+| `npm run dev` | Roda `src/infra/main.ts` com `tsx watch` (recarrega ao salvar) |
 | `npm run typecheck` | Checa os tipos sem gerar arquivos |
 | `npm run build` | Compila TypeScript para `dist/` |
-| `npm start` | Roda o build (`dist/main.js`); lê `../.env` se existir |
+| `npm start` | Roda o build (`dist/infra/main.js`); lê `../.env` se existir |
 
 ### Build e execução local do compilado
 

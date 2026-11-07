@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { AppDataSource } from "#infra/data.source.js";
 import { PackageController } from "#infra/adapters/in/http/controllers/package.controller.js";
-import { SolicitarEntregaService } from "#application/solicitar.entrega.service.js";
+import { SolicitarEntregaService } from "#application/services/solicitar.entrega.service.js";
 import { PgPackageRepository } from "#infra/adapters/out/pg.package.repository.js";
 import { PackageSchema } from "#infra/database/package.entity.js";
 
