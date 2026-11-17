@@ -1,0 +1,60 @@
+@startuml
+
+skinparam backgroundColor #1E1E1E
+
+skinparam defaultFontColor #FFFFFF
+skinparam ArrowColor #AAAAAA
+
+skinparam object {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam participant {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam actor {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam database {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+object ":Usuario" as Usuario
+object ":SolicitacaoService" as Service
+object ":SolicitacaoRepository" as Repo
+object ":Volume" as Volume
+object ":Solicitacao" as Solicitacao
+object ":Notificador" as Notif
+
+' Restrições de layout
+Usuario -[hidden]right- Service
+Service -[hidden]right- Repo
+Volume -[hidden]right- Solicitacao
+Solicitacao -[hidden]right- Notif
+
+Usuario --> Service : 1: registrarSolicitacao()
+Service --> Usuario : 6: confirmação()
+
+Service --> Volume : 2: validarDimensoes()
+Volume --> Service : 2.1: retorna status
+
+Service --> Solicitacao : 3: criar()
+Solicitacao --> Service : 3.1: retorna instância
+
+Service --> Repo : 4: salvar()
+Repo --> Service : 4.1: ok / salva
+
+Service --> Notif : 5: notificar()
+Notif --> Service : 5.1: confirma envio
+
+@enduml

@@ -1,0 +1,75 @@
+@startuml
+skinparam backgroundColor #1E1E1E
+skinparam defaultFontColor #FFFFFF
+skinparam ArrowColor #AAAAAA
+skinparam BoxPadding 10
+
+skinparam participant {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam actor {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam database {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam sequence {
+    LifeLineBorderColor #777777
+    LifeLineBackgroundColor #2D2D2D
+    ArrowColor #AAAAAA
+    FontColor #FFFFFF
+    BoxBorderColor #555555
+    BoxBackgroundColor #1E1E1E
+}
+
+actor Solicitante
+participant "controller: SolicitacaoController" as Controller
+participant "service: SolicitacaoService" as Service
+participant "volume: Volume" as Vol
+participant "solicitacao: Solicitacao" as Sol
+database "repository: SolicitacaoRepository" as Repo
+participant "notificador: Notificador" as Notif
+
+autonumber
+Solicitante -> Controller: registrarSolicitacao(dados)
+activate Controller
+
+Controller -> Service: criarNovaSolicitacao(dados)
+activate Service
+
+Service -> Vol: new Volume(descricao, tipo, peso)
+activate Vol
+Vol --> Service: volumeCriado
+deactivate Vol
+
+Service -> Sol: new Solicitacao(origem, destino, prioridade, volume)
+activate Sol
+Sol --> Service: solicitacaoCriada
+deactivate Sol
+
+Service -> Repo: salvar(solicitacao)
+activate Repo
+Repo --> Service: solicitacaoSalva
+deactivate Repo
+
+Service -> Notif: notificar(destinatario, mensagem)
+activate Notif
+Notif --> Service: confirmacaoEnvio
+deactivate Notif
+
+Service --> Controller: solicitacaoSalva
+deactivate Service
+
+Controller --> Solicitante: Retorna sucesso e código de rastreio
+deactivate Controller
+
+@enduml

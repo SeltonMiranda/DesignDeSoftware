@@ -1,0 +1,112 @@
+@startuml
+
+' Cor de fundo geral do diagrama
+skinparam backgroundColor #1E1E1E
+
+' Cor padrão do texto e das setas
+skinparam defaultFontColor #FFFFFF
+skinparam ArrowColor #AAAAAA
+
+' Estilo geral para as Classes
+skinparam class {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+    HeaderBackgroundColor #3D3D3D
+}
+
+' Estilo para Interfaces e Enums
+skinparam interface {
+    BackgroundColor #2D2D2D
+    BorderColor #777777
+    FontColor #FFFFFF
+}
+
+skinparam stereotypeCBackgroundColor #444444
+skinparam stereotypeEBackgroundColor #444444
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class SolicitacaoService {
+  + registrarSolicitacao() : Solicitacao
+  + atualizarStatus() : void
+  + cancelarSolicitacao() : void
+  + alterarPrioridade() : void
+  + consultarEncomendas() : List<Solicitacao>
+  + consultarHistorico() : List<HistoricoMovimentacao>
+}
+
+class Usuario {
+  - id : Long
+  - nome : String
+  - email : String
+  - papel : String
+  + getId() : Long
+}
+
+class Solicitacao {
+  - id : Long
+  - origem : String
+  - destino : String
+  - prioridade : PrioridadeEnum
+  - status : StatusSolicitacaoEnum
+  - motivoCancelamento : String
+  - dataCriacao : DateTime
+  + atualizarStatus() : void
+  + alterarPrioridade() : void
+  + cancelar() : void
+}
+
+class Volume {
+  - id : Long
+  - descricao : String
+  - tipo : String
+  - pesoEstimado : Double
+  + getId() : Long
+}
+
+class HistoricoMovimentacao {
+  - id : Long
+  - statusAnterior : StatusSolicitacaoEnum
+  - statusNovo : StatusSolicitacaoEnum
+  - dataHora : DateTime
+  - observacao : String
+  + getId() : Long
+}
+
+interface SolicitacaoRepository <<interface>> {
+  + salvar() : Solicitacao
+  + buscarPorId() : Solicitacao
+  + listarTodas() : List<Solicitacao>
+}
+
+class PostgresSolicitacaoRepository {
+  + salvar() : Solicitacao
+  + buscarPorId() : Solicitacao
+  + listarTodas() : List<Solicitacao>
+}
+
+interface Notificador <<interface>> {
+  + notificar() : void
+}
+
+class EmailNotificador {
+  + notificar() : void
+}
+
+' Relacionamentos de Domínio
+Usuario "1" -- "0..*" Solicitacao : registra / gerencia >
+Solicitacao "1" *-- "1" Volume : transporta >
+Solicitacao "1" *-- "1..*" HistoricoMovimentacao : possui >
+
+' Dependências de Serviço e Infraestrutura
+SolicitacaoService ..> Solicitacao
+SolicitacaoService ..> SolicitacaoRepository
+SolicitacaoService ..> Notificador
+
+' Realizações de Interfaces
+SolicitacaoRepository <|.. PostgresSolicitacaoRepository
+Notificador <|.. EmailNotificador
+
+
+@enduml

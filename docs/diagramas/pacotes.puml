@@ -1,0 +1,54 @@
+@startuml
+skinparam backgroundColor #1E1E1E
+skinparam defaultFontColor #FFFFFF
+skinparam ArrowColor #AAAAAA
+
+skinparam package {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+
+skinparam class {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+    HeaderBackgroundColor #3D3D3D
+}
+
+skinparam interface {
+    BackgroundColor #2D2D2D
+    BorderColor #777777
+    FontColor #FFFFFF
+}
+
+package "apresentacao" {
+  class SolicitacaoController
+}
+
+package "aplicacao" {
+  class CadastraEncomendaUseCase
+}
+
+package "dominio" {
+  class Solicitacao
+  class Volume
+  class HistoricoMovimentacao
+  interface SolicitacaoRepository
+  interface Notificador
+}
+
+package "infraestrutura" {
+  class PostgresSolicitacaoRepository
+  class EmailNotificador
+}
+
+SolicitacaoController ..> CadastraEncomendaUseCase : usa
+CadastraEncomendaUseCase ..> Solicitacao : manipula
+CadastraEncomendaUseCase ..> SolicitacaoRepository : usa interface
+CadastraEncomendaUseCase ..> Notificador : usa interface
+
+PostgresSolicitacaoRepository ..|> SolicitacaoRepository : implementa
+EmailNotificador ..|> Notificador : implementa
+
+@enduml
