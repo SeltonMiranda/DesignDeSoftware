@@ -1,9 +1,6 @@
 # ADR-0002: Arquitetura Hexagonal (Portas e Adaptadores) para a organização interna
 
 - **Status:** Aceita
-- **Data:** 2026-11-07
-- **Relacionada a:** [ADR-0001](0001-monolito-com-banco-unico.md), [ADR-0003](0003-notificacao-isolada-e-assincrona.md)
-- **Origem:** ASR01 e ASR02 ([arquitetura.md](../arquitetura.md)), RNF02, RNF03, RNF04
 
 ## 1. Contexto
 

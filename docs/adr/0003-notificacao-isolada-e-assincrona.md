@@ -1,9 +1,6 @@
 # ADR-0003: Notificação por e-mail isolada por porta e disparada de forma assíncrona após a gravação
 
 - **Status:** Aceita
-- **Data:** 2026-11-07
-- **Relacionada a:** [ADR-0001](0001-monolito-com-banco-unico.md), [ADR-0002](0002-arquitetura-hexagonal.md)
-- **Origem:** RF10 (notificação por e-mail), RN26, RN27, RNF01, RNF02
 
 ## 1. Contexto
 

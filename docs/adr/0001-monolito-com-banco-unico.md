@@ -1,9 +1,6 @@
 # ADR-0001: Monólito com banco de dados único (PostgreSQL)
 
 - **Status:** Aceita
-- **Data:** 2026-11-07
-- **Relacionada a:** [ADR-0002](0002-arquitetura-hexagonal.md), [ADR-0003](0003-notificacao-isolada-e-assincrona.md)
-- **Origem:** ASR03 e ASR04 ([arquitetura.md](../arquitetura.md)), RNF01, RN19
 
 ## 1. Contexto
 
@@ -17,8 +14,6 @@ Números do escopo ([requisitos.md](../requisitos.md)):
 - disponibilidade de 99% no horário de funcionamento (RNF01), cerca de 3 h de indisponibilidade tolerada por mês (15 h × ~22 dias úteis = ~330 h/mês; 1% ≈ 3,3 h).
 
 ## 2. Problema e forças envolvidas
-
-Precisamos decidir **como o sistema é dividido para implantação** e **como seus dados são armazenados**.
 
 | Força | Efeito sobre a decisão |
 | :- | :- |
@@ -55,7 +50,6 @@ Adotamos a **alternativa C**:
 2. Há **um único banco PostgreSQL**, num único schema, compartilhado por todos os casos de uso. Operações que envolvem mais de uma tabela (cadastro, finalização) usam **uma transação local**.
 3. O servidor é **sem estado** (sem sessão nem cache local), de modo que possa ser replicado atrás de um balanceador quando a disponibilidade exigir.
 4. Manutenções e migrações de banco ocorrem fora do horário de funcionamento (RNF01).
-5. A organização **interna** do monólito segue a [ADR-0002](0002-arquitetura-hexagonal.md), o que mantém aberta a possibilidade de extrair partes no futuro.
 
 ## 5. Consequências positivas
 
@@ -72,9 +66,3 @@ Adotamos a **alternativa C**:
 - **Escala é vertical/horizontal do conjunto**, não por componente. Para a carga estimada isso é irrelevante, mas pode ser reavaliado se o sistema passar a atender todas as universidades federais.
 - **Risco de "big ball of mud"** se os módulos (encomendas, histórico, notificação) passarem a acessar as tabelas uns dos outros. *Mitigação:* respeitar as portas e adaptadores da ADR-0002; revisar esta decisão se um módulo precisar de escala ou ciclo de vida próprios.
 - **Rotatividade de dados compartilhados:** todas as migrações de schema afetam todos os módulos e precisam de coordenação.
-
-## 7. Quando revisitar
-
-- Mais de um campus em produção com picos que saturem uma instância do banco;
-- necessidade de equipes independentes liberando partes do sistema em ritmos diferentes;
-- disponibilidade medida abaixo do alvo de RNF01 por causa do banco.
