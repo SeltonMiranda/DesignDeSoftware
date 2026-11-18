@@ -1,9 +1,12 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import { AppDataSource } from './data.source.js';
+import { semearLocais } from './database/seed/locais.seed.js';
 import { routes } from './adapters/in/http/routes/routes.js';
 
 await AppDataSource.initialize();
+// Os locais são inseridos por código (idempotente), não por script SQL manual.
+await semearLocais(AppDataSource);
 
 const app = express();
 app.use(express.json());

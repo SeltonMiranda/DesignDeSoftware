@@ -39,10 +39,10 @@ A cada mudança de situação de uma encomenda, o sistema notifica por e-mail o 
 
 Adotamos a **alternativa B**, deixando um caminho de evolução para a **C**:
 
-1. O núcleo declara a porta de saída `IParcelNotifier.notifyStatusChanged(parcel)`; o caso de uso só conhece essa interface.
-2. O caso de uso **primeiro grava** (encomenda + registro de movimentação, em uma transação) e **só então** dispara a notificação **sem `await`** no fluxo principal. Qualquer erro do notificador é capturado e registrado via porta `ILogger`; **nunca** é propagado nem desfaz a gravação (RN27).
+1. O núcleo declara a porta de saída `INotificador.notificar(notificacao)`; o caso de uso só conhece essa interface.
+2. O caso de uso **primeiro grava** (encomenda + registro de movimentação, em uma transação) e **só então** dispara a notificação **sem `await`** no fluxo principal. Qualquer erro do notificador é capturado e registrado via porta `ILogger` (`ConsoleLogger`); **nunca** é propagado nem desfaz a gravação (RN27).
 3. Entrada inválida ou falha de gravação **não** disparam notificação.
-4. O adaptador inicial (`LogParcelNotifier`) apenas escreve no log o que seria enviado. O adaptador SMTP real será um novo arquivo em `infra/adapters/out/`, trocado na montagem (`routes.ts`), sem alterar domínio nem casos de uso.
+4. O adaptador inicial (`ConsoleNotificador`) apenas imprime no terminal o que seria enviado. O adaptador SMTP real será um novo arquivo em `infra/adapters/out/`, trocado na montagem (`routes.ts`), sem alterar domínio nem casos de uso.
 5. Se for necessário garantir entrega, o adaptador passa a **gravar em uma tabela *outbox*** e um *worker* assume o envio (alternativa C), mantendo a mesma porta.
 
 ## 5. Consequências positivas

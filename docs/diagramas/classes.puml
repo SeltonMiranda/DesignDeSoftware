@@ -1,112 +1,200 @@
 @startuml
+' Diagrama de classes — reflete o código em server/src
 
-' Cor de fundo geral do diagrama
 skinparam backgroundColor #1E1E1E
-
-' Cor padrão do texto e das setas
 skinparam defaultFontColor #FFFFFF
 skinparam ArrowColor #AAAAAA
-
-' Estilo geral para as Classes
+skinparam shadowing false
+skinparam classAttributeIconSize 0
 skinparam class {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
     HeaderBackgroundColor #3D3D3D
 }
-
-' Estilo para Interfaces e Enums
 skinparam interface {
     BackgroundColor #2D2D2D
     BorderColor #777777
     FontColor #FFFFFF
 }
-
+skinparam enum {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+skinparam package {
+    BackgroundColor #252525
+    BorderColor #555555
+    FontColor #CCCCCC
+}
 skinparam stereotypeCBackgroundColor #444444
+skinparam stereotypeIBackgroundColor #444444
 skinparam stereotypeEBackgroundColor #444444
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
 
-class SolicitacaoService {
-  + registrarSolicitacao() : Solicitacao
-  + atualizarStatus() : void
-  + cancelarSolicitacao() : void
-  + alterarPrioridade() : void
-  + consultarEncomendas() : List<Solicitacao>
-  + consultarHistorico() : List<HistoricoMovimentacao>
+package "domain" {
+  class Package {
+    + id : string
+    + nomeRemetente : string
+    + nomeDestinatario : string
+    + emailDestinatario : string
+    + prioridade : Prioridade
+    + situacao : Situacao
+    + createdAt : Date
+    + updatedAt : Date
+    - movimentacoes : Movimentacao[]
+    + {static} cadastrar(dados, codigo, instante) : Package
+    + {static} restaurar(dados) : Package
+    + historicoMovimentacao : Movimentacao[]
+  }
+
+  class Volume {
+    + descricao : string
+    + tipo : Conteudo
+    + pesoKg : number
+    + {static} criar(descricao, tipo, pesoKg) : Volume
+  }
+
+  class Local {
+    + id : number
+    + campus : string
+    + predio : string
+    + sala : string
+    + {static} criar(id, campus, predio, sala) : Local
+  }
+
+  class Movimentacao <<value object>> {
+    + situacao : Situacao
+    + ocorridoEm : Date
+    + motivoCancelamento : string [0..1]
+  }
+
+  enum Situacao {
+    AGUARDANDO_COLETA
+    EM_TRANSITO
+    ENTREGUE
+    CANCELADA
+  }
+
+  enum Prioridade {
+    baixa
+    media
+    alta
+  }
+
+  enum Conteudo {
+    documento
+    volume
+  }
+
+  class DadosInvalidosError
+  class LocalNaoEncontradoError
 }
 
-class Usuario {
-  - id : Long
-  - nome : String
-  - email : String
-  - papel : String
-  + getId() : Long
+package "application.ports.in" {
+  interface SolicitarEntregaUseCase <<port in>> {
+    + execute(comando) : ResultadoCadastro
+  }
+  interface ConsultarEncomendaUseCase <<port in>> {
+    + execute(codigo) : Package | null
+  }
+  interface ListarLocaisUseCase <<port in>> {
+    + execute() : Local[]
+  }
 }
 
-class Solicitacao {
-  - id : Long
-  - origem : String
-  - destino : String
-  - prioridade : PrioridadeEnum
-  - status : StatusSolicitacaoEnum
-  - motivoCancelamento : String
-  - dataCriacao : DateTime
-  + atualizarStatus() : void
-  + alterarPrioridade() : void
-  + cancelar() : void
+package "application.services" {
+  class SolicitarEntregaService {
+    + execute(comando) : ResultadoCadastro
+    - buscarLocal(id, papel) : Local
+  }
+  class ConsultarEncomendaService {
+    + execute(codigo) : Package | null
+  }
+  class ListarLocaisService {
+    + execute() : Local[]
+  }
 }
 
-class Volume {
-  - id : Long
-  - descricao : String
-  - tipo : String
-  - pesoEstimado : Double
-  + getId() : Long
+package "application.ports.out" {
+  interface IPackageRepository <<port out>> {
+    + save(pack) : void
+    + findById(id) : Package | null
+    + findAll() : Package[]
+  }
+  interface ILocalRepository <<port out>> {
+    + findById(id) : Local | null
+    + findAll() : Local[]
+  }
+  interface INotificador <<port out>> {
+    + notificar(notificacao) : void
+  }
+  interface ICodigoGerador <<port out>> {
+    + gerar() : string
+  }
+  interface IRelogio <<port out>> {
+    + agora() : Date
+  }
+  interface ILogger <<port out>> {
+    + erro(mensagem, causa) : void
+  }
 }
 
-class HistoricoMovimentacao {
-  - id : Long
-  - statusAnterior : StatusSolicitacaoEnum
-  - statusNovo : StatusSolicitacaoEnum
-  - dataHora : DateTime
-  - observacao : String
-  + getId() : Long
+package "infra.adapters.in.http" {
+  class PackageController {
+    + solicitar(req, res)
+    + consultar(req, res)
+  }
+  class LocalController {
+    + listar(req, res)
+  }
 }
 
-interface SolicitacaoRepository <<interface>> {
-  + salvar() : Solicitacao
-  + buscarPorId() : Solicitacao
-  + listarTodas() : List<Solicitacao>
+package "infra.adapters.out" {
+  class TypeOrmPackageRepository
+  class TypeOrmLocalRepository
+  class ConsoleNotificador
+  class UuidCodigoGerador
+  class RelogioSistema
+  class ConsoleLogger
 }
 
-class PostgresSolicitacaoRepository {
-  + salvar() : Solicitacao
-  + buscarPorId() : Solicitacao
-  + listarTodas() : List<Solicitacao>
-}
+' Domínio
+Package "1" *-- "1" Volume : transporta >
+Package "1" *-- "1..*" Movimentacao : histórico >
+Package "*" --> "1" Local : remetente
+Package "*" --> "1" Local : destinatário
+Package ..> Situacao
+Package ..> Prioridade
+Volume ..> Conteudo
+LocalNaoEncontradoError --|> DadosInvalidosError
 
-interface Notificador <<interface>> {
-  + notificar() : void
-}
+' Controllers -> portas de entrada
+PackageController ..> SolicitarEntregaUseCase
+PackageController ..> ConsultarEncomendaUseCase
+LocalController ..> ListarLocaisUseCase
 
-class EmailNotificador {
-  + notificar() : void
-}
+' Serviços implementam as portas de entrada
+SolicitarEntregaUseCase <|.. SolicitarEntregaService
+ConsultarEncomendaUseCase <|.. ConsultarEncomendaService
+ListarLocaisUseCase <|.. ListarLocaisService
 
-' Relacionamentos de Domínio
-Usuario "1" -- "0..*" Solicitacao : registra / gerencia >
-Solicitacao "1" *-- "1" Volume : transporta >
-Solicitacao "1" *-- "1..*" HistoricoMovimentacao : possui >
+' Serviços usam o domínio e as portas de saída
+SolicitarEntregaService ..> Package : cadastrar()
+SolicitarEntregaService ..> IPackageRepository
+SolicitarEntregaService ..> ILocalRepository
+SolicitarEntregaService ..> INotificador
+SolicitarEntregaService ..> ICodigoGerador
+SolicitarEntregaService ..> IRelogio
+SolicitarEntregaService ..> ILogger
+ConsultarEncomendaService ..> IPackageRepository
+ListarLocaisService ..> ILocalRepository
 
-' Dependências de Serviço e Infraestrutura
-SolicitacaoService ..> Solicitacao
-SolicitacaoService ..> SolicitacaoRepository
-SolicitacaoService ..> Notificador
-
-' Realizações de Interfaces
-SolicitacaoRepository <|.. PostgresSolicitacaoRepository
-Notificador <|.. EmailNotificador
-
+' Adaptadores implementam as portas de saída
+IPackageRepository <|.. TypeOrmPackageRepository
+ILocalRepository <|.. TypeOrmLocalRepository
+INotificador <|.. ConsoleNotificador
+ICodigoGerador <|.. UuidCodigoGerador
+IRelogio <|.. RelogioSistema
+ILogger <|.. ConsoleLogger
 
 @enduml

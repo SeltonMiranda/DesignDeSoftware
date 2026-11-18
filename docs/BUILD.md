@@ -26,9 +26,12 @@ Servidor TypeScript (Node 24, Express 5, TypeORM, PostgreSQL).
    ```
    O `dev` usa `tsx watch` e lê `../.env`. O servidor sobe em `http://localhost:SERVER_PORT`.
 
+   Na subida, os locais iniciais são inseridos na tabela `locais` por código (idempotente). Se o banco já existia com o esquema antigo (locais como JSON em `encomendas`), recrie-o: `docker compose down -v`.
+
 3. Verificar se está de pé:
    ```bash
    curl http://localhost:SERVER_PORT/
+   curl http://localhost:SERVER_PORT/locais
    ```
 
 ### Scripts (`package.json`)

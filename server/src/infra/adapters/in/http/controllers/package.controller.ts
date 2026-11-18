@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
-import { DadosInvalidosError } from '#domain/package.js';
+import type { Local } from '#domain/local.js';
+import { DadosInvalidosError } from '#domain/erros.js';
 import type { SolicitarEntregaUseCase } from '#application/ports/in/solicitar.entrega.use-case.js';
-import type { ConsultarEncomendaService } from '#application/services/consultar.encomenda.service.js';
+import type { ConsultarEncomendaUseCase } from '#application/ports/in/consultar.encomenda.use-case.js';
 
 export class PackageController {
     constructor(
         private readonly solicitarUseCase: SolicitarEntregaUseCase,
-        private readonly consultarUseCase: ConsultarEncomendaService,
+        private readonly consultarUseCase: ConsultarEncomendaUseCase,
     ) {}
 
     solicitar = async (req: Request, res: Response): Promise<void> => {
@@ -33,9 +34,9 @@ export class PackageController {
             res.json({
                 codigoRastreio: encomenda.id,
                 nomeRemetente: encomenda.nomeRemetente,
-                localRemetente: encomenda.localRemetente,
+                localRemetente: apresentarLocal(encomenda.localRemetente),
                 nomeDestinatario: encomenda.nomeDestinatario,
-                localDestinatario: encomenda.localDestinatario,
+                localDestinatario: apresentarLocal(encomenda.localDestinatario),
                 emailDestinatario: encomenda.emailDestinatario,
                 descricao: encomenda.volume.descricao,
                 conteudo: encomenda.volume.tipo,
@@ -51,4 +52,8 @@ export class PackageController {
             res.status(500).json({ erro: 'Não foi possível consultar a encomenda.' });
         }
     };
+}
+
+function apresentarLocal(l: Local) {
+    return { id: l.id, campus: l.campus, predio: l.predio, sala: l.sala };
 }

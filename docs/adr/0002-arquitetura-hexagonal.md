@@ -14,7 +14,7 @@ Definido o monólito ([ADR-0001](0001-monolito-com-banco-unico.md)), falta decid
 | RNF03: regras de negócio testáveis sem banco, rede ou framework | Casos de uso precisam receber suas dependências por interface. |
 | Regras relevantes e interdependentes (transições RN09, históricos RN11–RN21, prioridade RN06) | Devem ficar concentradas e fáceis de achar, não espalhadas em controllers. |
 | Equipe pequena e iniciante | O custo de entendimento da estrutura precisa ser baixo e a estrutura deve ser *explicável* em uma página. |
-| RNF04: histórico imutável | Persistência deve expor operações específicas (`saveNew`), não um CRUD genérico que permita editar/apagar. |
+| RNF04: histórico imutável | Persistência não deve expor remoção nem edição dos registros de histórico. |
 
 ## 3. Alternativas consideradas
 
@@ -43,8 +43,8 @@ server/src
 │   └── services/              implementam ports/in; orquestram domínio + ports/out
 └── infra/
     ├── adapters/in/http/      controllers e rotas Express
-    ├── adapters/out/          PostgreSQL, relógio, gerador de código, notificador, logger
-    ├── database/              entidades TypeORM e mappers (domínio ↔ tabela)
+    ├── adapters/out/          TypeORM (repositórios), relógio, gerador de código, notificador, logger
+    ├── database/              entidades TypeORM, mappers (domínio ↔ tabela) e seed dos locais
     └── main.ts, routes.ts     montagem (raiz de composição)
 ```
 
@@ -54,14 +54,14 @@ Regras concretas:
 2. **Tudo que é externo ou não determinístico vira porta**: banco, relógio (RN12), geração do código de rastreamento (RN05), notificação e log.
 3. As **entidades do TypeORM são distintas das entidades de domínio**; um *mapper* traduz entre elas.
 4. A injeção de dependências é **manual**, em um único ponto (`routes.ts`), sem container de DI.
-5. Regras de negócio são **testadas com `node:test` e fakes em memória**, sem banco (ex.: `register.parcel.service.test.ts`).
-6. Portas de saída são desenhadas por intenção (`saveNew`, e no futuro `finalize`…), nunca como CRUD genérico, para que RNF04 seja impossível de violar pela aplicação.
+5. Regras de negócio são **testadas com `node:test` e fakes em memória**, sem banco (ex.: `test/application/solicitar.entrega.service.test.ts`).
+6. Portas de saída são desenhadas por intenção e sem operação de remoção (`IPackageRepository` expõe `save`, `findById` e `findAll`), para que RNF04 não seja violado pela aplicação. Operações como `finalize` serão adicionadas quando as transições forem implementadas.
 
-O caso de uso `registerParcel` (cadastrar encomenda) é a implementação de referência desta decisão.
+O caso de uso `SolicitarEntregaService` (cadastrar encomenda) é a implementação de referência desta decisão.
 
 ## 5. Consequências positivas
 
-- O domínio e os casos de uso rodam em milissegundos nos testes, sem Docker nem banco (12 testes em < 1 s no caso de uso atual).
+- O domínio e os casos de uso rodam em milissegundos nos testes, sem Docker nem banco (23 testes em < 1 s atualmente).
 - Trocar PostgreSQL/TypeORM ou o canal de e-mail exige um adaptador novo e uma linha na montagem; domínio e casos de uso permanecem intactos (RNF02).
 - Estrutura previsível: quem entra na equipe sabe onde cada coisa fica; revisões de código têm um critério objetivo (quem importa quem).
 - Controllers finos: protocolo HTTP e regras de negócio não se misturam; um segundo canal de entrada (CLI, fila) reutilizaria os mesmos casos de uso.
@@ -69,7 +69,7 @@ O caso de uso `registerParcel` (cadastrar encomenda) é a implementação de ref
 
 ## 6. Consequências negativas, custos e riscos
 
-- **Mais arquivos e indireção**: o cadastro simples passou a envolver ~20 arquivos (domínio, 6 portas, serviço, adaptadores, mapeamento). Para uma pessoa acostumada a MVC, a primeira leitura é mais lenta.
+- **Mais arquivos e indireção**: o cadastro simples passou a envolver cerca de 25 arquivos (domínio, portas, serviço, adaptadores, mapeamento). Para uma pessoa acostumada a MVC, a primeira leitura é mais lenta.
 - **Duplicação de modelos** (entidade de domínio × entidade TypeORM × DTO) e código de mapeamento a manter sincronizado.
 - **Disciplina necessária**: nada no compilador impede um `import` indevido de `infra` dentro de `domain`. *Mitigação:* adicionar regra de lint (`no-restricted-imports` ou `dependency-cruiser`) na integração contínua e revisar PRs com o checklist da regra 1.
 - **Risco de over-engineering**: criar portas para tudo, inclusive para o que nunca mudará. *Mitigação:* criar porta apenas para dependências externas, não determinísticas ou que precisem ser trocadas em testes.

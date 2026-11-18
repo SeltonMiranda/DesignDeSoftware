@@ -1,14 +1,15 @@
 import { Package } from '#domain/package.js';
 import { PackageSchema } from '#infra/database/package.entity.js';
+import { LocalMapper } from '#infra/database/local.mapper.js';
 
 export class PackageMapper {
     static toDomain(row: PackageSchema): Package {
         return Package.restaurar({
             id: row.id,
             nomeRemetente: row.nomeRemetente,
-            localRemetente: row.localRemetente,
+            localRemetente: LocalMapper.toDomain(row.localRemetente),
             nomeDestinatario: row.nomeDestinatario,
-            localDestinatario: row.localDestinatario,
+            localDestinatario: LocalMapper.toDomain(row.localDestinatario),
             emailDestinatario: row.emailDestinatario,
             descricao: row.descricao,
             conteudo: row.conteudo,
@@ -28,9 +29,9 @@ export class PackageMapper {
         const row = new PackageSchema();
         row.id = encomenda.id;
         row.nomeRemetente = encomenda.nomeRemetente;
-        row.localRemetente = encomenda.localRemetente;
+        row.localRemetente = LocalMapper.toPersistence(encomenda.localRemetente);
         row.nomeDestinatario = encomenda.nomeDestinatario;
-        row.localDestinatario = encomenda.localDestinatario;
+        row.localDestinatario = LocalMapper.toPersistence(encomenda.localDestinatario);
         row.emailDestinatario = encomenda.emailDestinatario;
         row.descricao = encomenda.volume.descricao;
         row.conteudo = encomenda.volume.tipo;

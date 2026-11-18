@@ -1,60 +1,44 @@
 @startuml
+' Diagrama de comunicação — cadastro de encomenda (POST /encomendas)
 
 skinparam backgroundColor #1E1E1E
-
 skinparam defaultFontColor #FFFFFF
 skinparam ArrowColor #AAAAAA
-
+skinparam shadowing false
 skinparam object {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
-
-skinparam participant {
-    BackgroundColor #2D2D2D
-    BorderColor #555555
-    FontColor #FFFFFF
-}
-
 skinparam actor {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
 
-skinparam database {
-    BackgroundColor #2D2D2D
-    BorderColor #555555
-    FontColor #FFFFFF
-}
+object ":Solicitante" as Solicitante
+object ":PackageController" as Ctrl
+object ":SolicitarEntregaService" as Service
+object ":ILocalRepository\n(TypeOrmLocalRepository)" as LocalRepo
+object ":ICodigoGerador\n(UuidCodigoGerador)" as Cod
+object ":IRelogio\n(RelogioSistema)" as Rel
+object ":Package" as Pkg
+object ":Volume" as Vol
+object ":IPackageRepository\n(TypeOrmPackageRepository)" as Repo
+object ":INotificador\n(ConsoleNotificador)" as Notif
+object ":ILogger\n(ConsoleLogger)" as Log
 
-object ":Usuario" as Usuario
-object ":SolicitacaoService" as Service
-object ":SolicitacaoRepository" as Repo
-object ":Volume" as Volume
-object ":Solicitacao" as Solicitacao
-object ":Notificador" as Notif
-
-' Restrições de layout
-Usuario -[hidden]right- Service
-Service -[hidden]right- Repo
-Volume -[hidden]right- Solicitacao
-Solicitacao -[hidden]right- Notif
-
-Usuario --> Service : 1: registrarSolicitacao()
-Service --> Usuario : 6: confirmação()
-
-Service --> Volume : 2: validarDimensoes()
-Volume --> Service : 2.1: retorna status
-
-Service --> Solicitacao : 3: criar()
-Solicitacao --> Service : 3.1: retorna instância
-
-Service --> Repo : 4: salvar()
-Repo --> Service : 4.1: ok / salva
-
-Service --> Notif : 5: notificar()
-Notif --> Service : 5.1: confirma envio
+Solicitante -right-> Ctrl : 1: POST /encomendas
+Ctrl -right-> Service : 2: execute(comando)
+Service -down-> LocalRepo : 3: findById(localRemetenteId)\n4: findById(localDestinatarioId)
+Service -down-> Cod : 5: gerar()
+Service -down-> Rel : 6: agora()
+Service -down-> Pkg : 7: cadastrar(dados, codigo, instante)
+Pkg -right-> Vol : 7.1: criar(descricao, tipo, pesoKg)
+Service -down-> Repo : 8: save(encomenda)
+Service -down-> Notif : 9: notificar(...) [assíncrono, sem await]
+Notif ..> Log : 9.1: erro(...) [somente se falhar]
+Service ..> Ctrl : 10: ResultadoCadastro
+Ctrl ..> Solicitante : 11: 201 + código de rastreio
 
 @enduml

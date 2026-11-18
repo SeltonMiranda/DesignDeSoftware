@@ -1,19 +1,16 @@
+import { DadosInvalidosError } from '#domain/erros.js';
+import { Local } from '#domain/local.js';
+
 /** Núcleo do domínio, sem dependência de HTTP ou banco de dados. */
 export type Prioridade = 'baixa' | 'media' | 'alta';
 export type Conteudo = 'documento' | 'volume';
 export type Situacao = 'AGUARDANDO_COLETA' | 'EM_TRANSITO' | 'ENTREGUE' | 'CANCELADA';
 
-export interface LocalCampus {
-    campus: string;
-    predio: string;
-    sala: string;
-}
-
 export interface DadosEncomenda {
     nomeRemetente: string;
-    localRemetente: LocalCampus;
+    localRemetente: Local;
     nomeDestinatario: string;
-    localDestinatario: LocalCampus;
+    localDestinatario: Local;
     emailDestinatario: string;
     pesoKg: number;
     conteudo: Conteudo;
@@ -27,13 +24,6 @@ export interface Movimentacao {
     motivoCancelamento?: string;
 }
 
-export class DadosInvalidosError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'DadosInvalidosError';
-    }
-}
-
 function textoObrigatorio(value: unknown, campo: string): string {
     if (typeof value !== 'string' || value.trim().length === 0) {
         throw new DadosInvalidosError(`${campo} é obrigatório.`);
@@ -41,22 +31,11 @@ function textoObrigatorio(value: unknown, campo: string): string {
     return value.trim();
 }
 
-function validarLocal(value: unknown, campo: string): LocalCampus {
-    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-        throw new DadosInvalidosError(`${campo} deve informar campus, predio e sala.`);
+function validarLocal(value: unknown, campo: string): Local {
+    if (!(value instanceof Local)) {
+        throw new DadosInvalidosError(`${campo} deve ser um local cadastrado.`);
     }
-    const dados = value as Partial<LocalCampus>;
-    return {
-        campus: textoObrigatorio(dados.campus, `${campo}.campus`),
-        predio: textoObrigatorio(dados.predio, `${campo}.predio`),
-        sala: textoObrigatorio(dados.sala, `${campo}.sala`),
-    };
-}
-
-function localNormalizado(local: LocalCampus): string {
-    return [local.campus, local.predio, local.sala]
-        .map((parte) => parte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
-        .join('|');
+    return value;
 }
 
 export class Volume {
@@ -85,9 +64,9 @@ export class Package {
     private constructor(
         public readonly id: string,
         public readonly nomeRemetente: string,
-        public readonly localRemetente: LocalCampus,
+        public readonly localRemetente: Local,
         public readonly nomeDestinatario: string,
-        public readonly localDestinatario: LocalCampus,
+        public readonly localDestinatario: Local,
         public readonly emailDestinatario: string,
         public readonly volume: Volume,
         public readonly prioridade: Prioridade,
@@ -105,7 +84,7 @@ export class Package {
         const nomeDestinatario = textoObrigatorio(dados.nomeDestinatario, 'Nome do destinatário');
         const localRemetente = validarLocal(dados.localRemetente, 'Local do remetente');
         const localDestinatario = validarLocal(dados.localDestinatario, 'Local do destinatário');
-        if (localNormalizado(localRemetente) === localNormalizado(localDestinatario)) {
+        if (localRemetente.id === localDestinatario.id) {
             throw new DadosInvalidosError('Origem e destino devem ser diferentes.');
         }
         const emailDestinatario = textoObrigatorio(dados.emailDestinatario, 'E-mail do destinatário');
@@ -131,9 +110,9 @@ export class Package {
     static restaurar(dados: {
         id: string;
         nomeRemetente: string;
-        localRemetente: LocalCampus;
+        localRemetente: Local;
         nomeDestinatario: string;
-        localDestinatario: LocalCampus;
+        localDestinatario: Local;
         emailDestinatario: string;
         descricao: string;
         conteudo: Conteudo;

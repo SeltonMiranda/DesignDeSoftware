@@ -9,6 +9,7 @@
 | RN03 | O conteúdo só pode ser "documento" ou "volume". | RF01 |
 | RN04 | O local de origem deve ser diferente do local de destino. | RF01 |
 | RN05 | O código de rastreamento é gerado pelo sistema, nunca informado pelo usuário. | RF01 |
+| RN28 | Origem e destino devem ser locais previamente cadastrados (tabela `locais`: campus, prédio e sala), informados pelo id. Id inexistente é rejeitado. | RF01 |
 
 ## 2. Prioridade e lista de coleta
 

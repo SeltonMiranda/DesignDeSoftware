@@ -1,54 +1,92 @@
 @startuml
+' Diagrama de pacotes — reflete a organização de server/src
+
 skinparam backgroundColor #1E1E1E
 skinparam defaultFontColor #FFFFFF
 skinparam ArrowColor #AAAAAA
-
+skinparam shadowing false
 skinparam package {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
-
 skinparam class {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
-    HeaderBackgroundColor #3D3D3D
 }
-
 skinparam interface {
     BackgroundColor #2D2D2D
     BorderColor #777777
     FontColor #FFFFFF
 }
 
-package "apresentacao" {
-  class SolicitacaoController
-}
-
-package "aplicacao" {
-  class CadastraEncomendaUseCase
-}
-
-package "dominio" {
-  class Solicitacao
+package "domain" {
+  class Package
   class Volume
-  class HistoricoMovimentacao
-  interface SolicitacaoRepository
-  interface Notificador
+  class Local
+  class "erros" as Erros
 }
 
-package "infraestrutura" {
-  class PostgresSolicitacaoRepository
-  class EmailNotificador
+package "application" {
+  package "ports.in" {
+    interface SolicitarEntregaUseCase
+    interface ConsultarEncomendaUseCase
+    interface ListarLocaisUseCase
+  }
+  package "services" {
+    class SolicitarEntregaService
+    class ConsultarEncomendaService
+    class ListarLocaisService
+  }
+  package "ports.out" {
+    interface IPackageRepository
+    interface ILocalRepository
+    interface INotificador
+    interface ICodigoGerador
+    interface IRelogio
+    interface ILogger
+  }
 }
 
-SolicitacaoController ..> CadastraEncomendaUseCase : usa
-CadastraEncomendaUseCase ..> Solicitacao : manipula
-CadastraEncomendaUseCase ..> SolicitacaoRepository : usa interface
-CadastraEncomendaUseCase ..> Notificador : usa interface
+package "infra" {
+  package "adapters.in.http" {
+    class PackageController
+    class LocalController
+    class "routes (composição)" as Routes
+  }
+  package "adapters.out" {
+    class TypeOrmPackageRepository
+    class TypeOrmLocalRepository
+    class ConsoleNotificador
+    class UuidCodigoGerador
+    class RelogioSistema
+    class ConsoleLogger
+  }
+  package "database" {
+    class PackageSchema
+    class LocalSchema
+    class PackageMapper
+    class LocalMapper
+    class "seed/locais.seed" as Seed
+  }
+  class "main / data.source" as Main
+}
 
-PostgresSolicitacaoRepository ..|> SolicitacaoRepository : implementa
-EmailNotificador ..|> Notificador : implementa
+' Dependências (sempre apontando para o domínio)
+"application.services" ..> "domain" : usa
+"application.services" ..> "ports.in" : implementa
+"application.services" ..> "ports.out" : usa
+"ports.in" ..> "domain"
+"ports.out" ..> "domain"
+
+"adapters.in.http" ..> "ports.in" : chama
+"adapters.out" ..> "ports.out" : implementa
+"adapters.out" ..> "database" : usa
+"database" ..> "domain" : converte de/para
+Routes ..> "application.services" : instancia e injeta
+Routes ..> "adapters.out" : instancia
+Main ..> Seed : semeia locais
+Main ..> Routes
 
 @enduml

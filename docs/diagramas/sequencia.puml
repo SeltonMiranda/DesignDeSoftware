@@ -1,27 +1,31 @@
 @startuml
+' Diagrama de sequência — cadastro de encomenda (POST /encomendas)
+
 skinparam backgroundColor #1E1E1E
 skinparam defaultFontColor #FFFFFF
 skinparam ArrowColor #AAAAAA
+skinparam shadowing false
 skinparam BoxPadding 10
-
+skinparam note {
+    BackgroundColor #3D3D3D
+    BorderColor #777777
+    FontColor #FFFFFF
+}
 skinparam participant {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
-
 skinparam actor {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
-
 skinparam database {
     BackgroundColor #2D2D2D
     BorderColor #555555
     FontColor #FFFFFF
 }
-
 skinparam sequence {
     LifeLineBorderColor #777777
     LifeLineBackgroundColor #2D2D2D
@@ -29,47 +33,107 @@ skinparam sequence {
     FontColor #FFFFFF
     BoxBorderColor #555555
     BoxBackgroundColor #1E1E1E
+    GroupBorderColor #777777
 }
 
 actor Solicitante
-participant "controller: SolicitacaoController" as Controller
-participant "service: SolicitacaoService" as Service
-participant "volume: Volume" as Vol
-participant "solicitacao: Solicitacao" as Sol
-database "repository: SolicitacaoRepository" as Repo
-participant "notificador: Notificador" as Notif
+participant "controller: PackageController" as Controller
+participant "service: SolicitarEntregaService" as Service
+database "localRepo: ILocalRepository" as LocalRepo
+participant "codigoGerador: ICodigoGerador" as Cod
+participant "relogio: IRelogio" as Rel
+participant "Package" as Pkg
+participant "Volume" as Vol
+database "packageRepo: IPackageRepository" as Repo
+participant "notificador: INotificador" as Notif
+participant "logger: ILogger" as Log
 
 autonumber
-Solicitante -> Controller: registrarSolicitacao(dados)
+Solicitante -> Controller: POST /encomendas (corpo JSON)
 activate Controller
 
-Controller -> Service: criarNovaSolicitacao(dados)
+Controller -> Service: execute(comando)
 activate Service
 
-Service -> Vol: new Volume(descricao, tipo, peso)
-activate Vol
-Vol --> Service: volumeCriado
-deactivate Vol
+Service -> LocalRepo: findById(localRemetenteId)
+LocalRepo --> Service: Local | null
+Service -> LocalRepo: findById(localDestinatarioId)
+LocalRepo --> Service: Local | null
+note right of Service: id inválido -> DadosInvalidosError\nlocal inexistente -> LocalNaoEncontradoError
 
-Service -> Sol: new Solicitacao(origem, destino, prioridade, volume)
-activate Sol
-Sol --> Service: solicitacaoCriada
-deactivate Sol
+Service -> Cod: gerar()
+Cod --> Service: codigoRastreio
+Service -> Rel: agora()
+Rel --> Service: instante
 
-Service -> Repo: salvar(solicitacao)
-activate Repo
-Repo --> Service: solicitacaoSalva
-deactivate Repo
+Service -> Pkg: cadastrar(dados, codigo, instante)
+activate Pkg
+Pkg -> Vol: criar(descricao, tipo, pesoKg)
+Vol --> Pkg: volume
+Pkg --> Service: encomenda (AGUARDANDO_COLETA)
+deactivate Pkg
+note right of Pkg: validações do domínio (RN01–RN04, RN06)\nlançam DadosInvalidosError
 
-Service -> Notif: notificar(destinatario, mensagem)
-activate Notif
-Notif --> Service: confirmacaoEnvio
-deactivate Notif
+Service -> Repo: save(encomenda)
+Repo --> Service: ok
 
-Service --> Controller: solicitacaoSalva
+Service -[#AAAAAA]->> Notif: notificar({destino, codigoRastreio, situacao})\n[após a gravação, sem await]
+Service --> Controller: ResultadoCadastro
 deactivate Service
 
-Controller --> Solicitante: Retorna sucesso e código de rastreio
+Controller --> Solicitante: 201 {codigoRastreio, situacao, criadoEm}
 deactivate Controller
+
+opt falha no envio
+    Notif -> Log: erro("Falha ao enviar notificação…", causa)
+end
+
+@enduml
+
+@startuml
+' Diagrama de sequência — consulta por código de rastreio (GET /encomendas/:codigo)
+
+skinparam backgroundColor #1E1E1E
+skinparam defaultFontColor #FFFFFF
+skinparam ArrowColor #AAAAAA
+skinparam shadowing false
+skinparam participant {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+skinparam actor {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+skinparam database {
+    BackgroundColor #2D2D2D
+    BorderColor #555555
+    FontColor #FFFFFF
+}
+skinparam sequence {
+    LifeLineBorderColor #777777
+    LifeLineBackgroundColor #2D2D2D
+    ArrowColor #AAAAAA
+    FontColor #FFFFFF
+}
+
+actor Solicitante
+participant "controller: PackageController" as Controller
+participant "service: ConsultarEncomendaService" as Service
+database "packageRepo: IPackageRepository" as Repo
+
+autonumber
+Solicitante -> Controller: GET /encomendas/:codigo
+Controller -> Service: execute(codigo)
+Service -> Repo: findById(codigo.trim())
+Repo --> Service: Package | null
+Service --> Controller: Package | null
+alt encontrada
+    Controller --> Solicitante: 200 (dados, locais, histórico do mais recente ao mais antigo)
+else não encontrada
+    Controller --> Solicitante: 404 {erro}
+end
 
 @enduml

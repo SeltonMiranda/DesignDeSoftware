@@ -1,24 +1,50 @@
-import { randomUUID } from 'node:crypto';
+import { DadosInvalidosError, LocalNaoEncontradoError } from '#domain/erros.js';
 import { Package } from '#domain/package.js';
-import type { DadosEncomenda } from '#domain/package.js';
-import type { ResultadoCadastro, SolicitarEntregaUseCase } from '#application/ports/in/solicitar.entrega.use-case.js';
+import type { Local } from '#domain/local.js';
+import type {
+    ResultadoCadastro,
+    SolicitarEntregaComando,
+    SolicitarEntregaUseCase,
+} from '#application/ports/in/solicitar.entrega.use-case.js';
 import type { IPackageRepository } from '#application/ports/out/package.repository.js';
+import type { ILocalRepository } from '#application/ports/out/local.repository.js';
 import type { INotificador } from '#application/ports/out/notificador.js';
+import type { ICodigoGerador } from '#application/ports/out/codigo.gerador.js';
+import type { IRelogio } from '#application/ports/out/relogio.js';
+import type { ILogger } from '#application/ports/out/logger.js';
 
+/** Cadastro de encomenda (RF01). Depende apenas do domínio e de portas de saída. */
 export class SolicitarEntregaService implements SolicitarEntregaUseCase {
     constructor(
-        private readonly encomendaRepository: IPackageRepository,
+        private readonly packageRepository: IPackageRepository,
+        private readonly localRepository: ILocalRepository,
         private readonly notificador: INotificador,
-        private readonly gerarCodigo: () => string = () => `POL-${randomUUID().replace(/-/g, '').slice(0, 12).toUpperCase()}`,
-        private readonly agora: () => Date = () => new Date(),
+        private readonly codigoGerador: ICodigoGerador,
+        private readonly relogio: IRelogio,
+        private readonly logger: ILogger,
     ) {}
 
-    async execute(dados: DadosEncomenda): Promise<ResultadoCadastro> {
-        const encomenda = Package.cadastrar(dados, this.gerarCodigo(), this.agora());
-        await this.encomendaRepository.save(encomenda);
+    async execute(comando: SolicitarEntregaComando): Promise<ResultadoCadastro> {
+        if (comando === null || typeof comando !== 'object') {
+            throw new DadosInvalidosError('Dados do cadastro são obrigatórios.');
+        }
+        const localRemetente = await this.buscarLocal(comando.localRemetenteId, 'remetente');
+        const localDestinatario = await this.buscarLocal(comando.localDestinatarioId, 'destinatário');
 
-        // A notificação só é disparada depois da gravação; a falha não desfaz o cadastro.
-        // Não aguardar a dependência externa impede atrasos na resposta HTTP.
+        const encomenda = Package.cadastrar({
+            nomeRemetente: comando.nomeRemetente,
+            localRemetente,
+            nomeDestinatario: comando.nomeDestinatario,
+            localDestinatario,
+            emailDestinatario: comando.emailDestinatario,
+            pesoKg: comando.pesoKg,
+            conteudo: comando.conteudo,
+            prioridade: comando.prioridade,
+            ...(comando.descricao !== undefined ? { descricao: comando.descricao } : {}),
+        }, this.codigoGerador.gerar(), this.relogio.agora());
+
+        await this.packageRepository.save(encomenda);
+
         queueMicrotask(() => {
             try {
                 void Promise.resolve(this.notificador.notificar({
@@ -26,10 +52,10 @@ export class SolicitarEntregaService implements SolicitarEntregaUseCase {
                     codigoRastreio: encomenda.id,
                     situacao: encomenda.situacao,
                 })).catch((erro: unknown) => {
-                    console.error('Falha ao enviar notificação de cadastro:', erro);
+                    this.logger.erro('Falha ao enviar notificação de cadastro.', erro);
                 });
             } catch (erro) {
-                console.error('Falha ao iniciar notificação de cadastro:', erro);
+                this.logger.erro('Falha ao iniciar notificação de cadastro.', erro);
             }
         });
 
@@ -38,5 +64,16 @@ export class SolicitarEntregaService implements SolicitarEntregaUseCase {
             situacao: encomenda.situacao,
             criadoEm: new Date(encomenda.createdAt),
         };
+    }
+
+    private async buscarLocal(id: unknown, papel: string): Promise<Local> {
+        if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
+            throw new DadosInvalidosError(`Local do ${papel} deve ser informado pelo id (inteiro positivo).`);
+        }
+        const local = await this.localRepository.findById(id);
+        if (!local) {
+            throw new LocalNaoEncontradoError(`Local do ${papel} não encontrado (id ${id}).`);
+        }
+        return local;
     }
 }

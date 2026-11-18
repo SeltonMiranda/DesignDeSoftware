@@ -6,8 +6,6 @@
 
 O sistema de gestão de entregas internas do campus será desenvolvido pelo laboratório C3SL da UFPR, com **2 professores e 5 alunos** (rotatividade alta). O escopo inicial é o campus Politécnico; a evolução prevista é abranger todos os campi da UFPR e, depois, outras universidades federais.
 
-Números do escopo ([requisitos.md](../requisitos.md)):
-
 - funcionamento de segunda a sexta, das 7h às 22h;
 - média de ~300 requisições/dia (~20/h) e pico de 50 a 60 requisições/h;
 - cerca de 3 implantações por semana;
