@@ -85,7 +85,7 @@ Controller --> Solicitante: 201 {codigoRastreio, situacao, criadoEm}
 deactivate Controller
 
 opt falha no envio
-    Notif -> Log: erro("Falha ao enviar notificação…", causa)
+    Service -> Log: erro("Falha ao enviar notificação…", causa)
 end
 
 @enduml

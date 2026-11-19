@@ -37,7 +37,7 @@ Service -down-> Pkg : 7: cadastrar(dados, codigo, instante)
 Pkg -right-> Vol : 7.1: criar(descricao, tipo, pesoKg)
 Service -down-> Repo : 8: save(encomenda)
 Service -down-> Notif : 9: notificar(...) [assíncrono, sem await]
-Notif ..> Log : 9.1: erro(...) [somente se falhar]
+Service ..> Log : 9.1: erro(...) [somente se falhar]
 Service ..> Ctrl : 10: ResultadoCadastro
 Ctrl ..> Solicitante : 11: 201 + código de rastreio
 
